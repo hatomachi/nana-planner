@@ -7,139 +7,85 @@ interface CountdownBannerProps {
 }
 
 /**
- * Floating countdown banner that appears on the timeline
- * between the NOW line and the next milestone,
- * showing effective working time remaining.
+ * Compact countdown card positioned just above the next milestone
+ * on the timeline. Shows Net Usable Time (excluding intervening meetings).
  */
 export const CountdownBanner: React.FC<CountdownBannerProps> = ({ info }) => {
-  const { milestone, effectiveHoursRemaining, urgency } = info;
+  const { milestone, netUsableHours, urgency, atRiskTaskIds } = info;
 
-  // Calculate progress percentage (inverse: how much time has "drained")
-  // For the circular indicator
-  const maxHours = 10; // reference max for visual indicator
-  const progress = Math.min(effectiveHoursRemaining / maxHours, 1);
-  const circumference = 2 * Math.PI * 18; // radius = 18
-  const strokeDashoffset = circumference * (1 - progress);
-
-  // Position the banner on the timeline — vertically centered between now line and milestone
   const milestoneY = hourToPixel(milestone.startHour);
 
-  // Color scheme based on urgency
   const colors = {
     critical: {
-      bg: 'bg-red-950/80',
-      border: 'border-danger-bright/60',
+      bg: 'bg-red-950/85',
+      border: 'border-danger-bright/50',
       text: 'text-danger-glow',
       accent: 'text-danger-bright',
-      ring: '#ef4444',
-      ringTrack: '#451a1a',
-      glow: 'shadow-red-500/30',
-      badge: 'bg-danger/50',
+      line: 'bg-danger-bright/40',
     },
     warning: {
-      bg: 'bg-amber-950/70',
-      border: 'border-amber-500/50',
+      bg: 'bg-amber-950/75',
+      border: 'border-amber-500/40',
       text: 'text-amber-300',
       accent: 'text-amber-400',
-      ring: '#f59e0b',
-      ringTrack: '#451a03',
-      glow: 'shadow-amber-500/20',
-      badge: 'bg-amber-900/50',
+      line: 'bg-amber-500/30',
     },
     normal: {
       bg: 'bg-surface-overlay/80',
-      border: 'border-accent/30',
+      border: 'border-accent/25',
       text: 'text-accent-glow',
       accent: 'text-accent',
-      ring: '#818cf8',
-      ringTrack: '#1e1b4b',
-      glow: 'shadow-accent/20',
-      badge: 'bg-accent/20',
+      line: 'bg-accent/20',
     },
   };
 
   const c = colors[urgency];
+  const hasRisk = atRiskTaskIds.length > 0;
 
   return (
     <>
-      {/* Connector line from NOW to milestone */}
+      {/* Thin connector line */}
       <div
-        className={`absolute right-8 w-px z-30 pointer-events-none ${
-          urgency === 'critical'
-            ? 'bg-gradient-to-b from-danger-bright/60 to-danger-bright/10'
-            : urgency === 'warning'
-              ? 'bg-gradient-to-b from-amber-400/40 to-amber-400/10'
-              : 'bg-gradient-to-b from-accent/30 to-accent/10'
-        }`}
-        style={{ top: `${milestoneY - 60}px`, height: '60px' }}
+        className={`absolute right-6 w-px z-30 pointer-events-none ${c.line}`}
+        style={{ top: `${milestoneY - 32}px`, height: '32px' }}
       />
 
-      {/* Countdown card — positioned just above the milestone */}
+      {/* Compact countdown pill */}
       <div
-        className={`absolute right-2 z-35 pointer-events-none`}
-        style={{ top: `${milestoneY - 72}px` }}
+        className="absolute right-2 z-35 pointer-events-none"
+        style={{ top: `${milestoneY - 52}px` }}
       >
         <div
           className={`
-            ${c.bg} ${c.border} border rounded-xl px-3 py-2
-            backdrop-blur-md shadow-lg ${c.glow}
-            flex items-center gap-3
-            min-w-[200px]
+            ${c.bg} ${c.border} border rounded-lg px-2.5 py-1.5
+            backdrop-blur-md shadow-md
+            flex items-center gap-2
           `}
         >
-          {/* Circular progress indicator */}
-          <div className="relative flex-shrink-0">
-            <svg width="44" height="44" className="-rotate-90">
-              {/* Track */}
-              <circle
-                cx="22"
-                cy="22"
-                r="18"
-                fill="none"
-                stroke={c.ringTrack}
-                strokeWidth="3"
-              />
-              {/* Progress */}
-              <circle
-                cx="22"
-                cy="22"
-                r="18"
-                fill="none"
-                stroke={c.ring}
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                className="transition-all duration-500 ease-out"
-              />
-            </svg>
-            {/* Center icon */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs">
-                {urgency === 'critical' ? '🔥' : urgency === 'warning' ? '⏰' : '⏱️'}
+          {/* Icon */}
+          <span className="text-[10px]">
+            {urgency === 'critical' ? '🔥' : urgency === 'warning' ? '⏰' : '⏱️'}
+          </span>
+
+          {/* Text */}
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-bold font-mono tabular-nums ${c.text} leading-none`}>
+                {formatDuration(netUsableHours)}
+              </span>
+              <span className="text-[8px] text-text-muted leading-none">
+                実質稼働
               </span>
             </div>
+            <span className="text-[8px] text-text-muted leading-none mt-0.5 truncate">
+              → {formatHour(milestone.startHour)} {milestone.title.replace(/^[^\s]+\s/, '')}
+            </span>
           </div>
 
-          {/* Text info */}
-          <div className="flex flex-col min-w-0">
-            {/* Duration */}
-            <span className={`text-base font-bold font-mono tabular-nums ${c.text} leading-tight`}>
-              {formatDuration(effectiveHoursRemaining)}
-            </span>
-
-            {/* Label */}
-            <span className="text-[10px] text-text-muted leading-tight mt-0.5 truncate">
-              → {formatHour(milestone.startHour)} {milestone.title}
-            </span>
-
-            {/* Urgency badge for critical */}
-            {urgency === 'critical' && (
-              <span className={`text-[9px] ${c.accent} font-semibold tracking-wider mt-0.5 animate-pulse`}>
-                ⚠ 残りわずか
-              </span>
-            )}
-          </div>
+          {/* Risk indicator */}
+          {hasRisk && (
+            <div className="w-1.5 h-1.5 rounded-full bg-danger-bright animate-pulse shrink-0" />
+          )}
         </div>
       </div>
     </>
@@ -147,38 +93,46 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ info }) => {
 };
 
 /**
- * Header-level countdown display for always-visible status
+ * Header-level countdown — always visible, shows net usable time.
  */
 interface CountdownHeaderProps {
   info: NextMilestoneInfo;
 }
 
 export const CountdownHeader: React.FC<CountdownHeaderProps> = ({ info }) => {
-  const { milestone, effectiveHoursRemaining, urgency } = info;
+  const { milestone, netUsableHours, urgency, atRiskTaskIds } = info;
 
-  const urgencyStyles = {
+  const styles = {
     critical: 'bg-danger/20 border-danger-bright/40 text-danger-glow',
     warning: 'bg-amber-900/20 border-amber-500/40 text-amber-300',
-    normal: 'bg-accent/10 border-accent/30 text-accent-glow',
+    normal: 'bg-accent/10 border-accent/25 text-accent-glow',
   };
 
-  const urgencyIcons = {
+  const icons = {
     critical: '🔥',
     warning: '⏰',
     normal: '⏱️',
   };
 
+  const hasRisk = atRiskTaskIds.length > 0;
+
   return (
-    <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 border ${urgencyStyles[urgency]} transition-all duration-300`}>
-      <span className="text-xs">{urgencyIcons[urgency]}</span>
+    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${styles[urgency]} transition-all duration-300`}>
+      <span className="text-[10px]">{icons[urgency]}</span>
       <div className="flex flex-col">
-        <span className="text-xs font-bold font-mono tabular-nums leading-tight">
-          {formatDuration(effectiveHoursRemaining)}
-        </span>
-        <span className="text-[9px] text-text-muted leading-tight truncate max-w-[120px]">
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] font-bold font-mono tabular-nums leading-none">
+            {formatDuration(netUsableHours)}
+          </span>
+          <span className="text-[8px] text-text-muted leading-none">実質</span>
+        </div>
+        <span className="text-[8px] text-text-muted leading-none mt-0.5 truncate max-w-[100px]">
           → {formatHour(milestone.startHour)} {milestone.title.replace(/^[^\s]+\s/, '')}
         </span>
       </div>
+      {hasRisk && (
+        <div className="w-1.5 h-1.5 rounded-full bg-danger-bright animate-pulse shrink-0" />
+      )}
     </div>
   );
 };

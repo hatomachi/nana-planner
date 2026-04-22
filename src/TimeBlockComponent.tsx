@@ -7,11 +7,17 @@ import { HOUR_HEIGHT } from './data';
 interface TimeBlockComponentProps {
   block: TimeBlock;
   nowHour: number;
+  /** Resolved milestone title for the target badge */
+  targetMilestoneLabel?: string;
+  /** Whether this milestone has at-risk tasks */
+  isAtRisk?: boolean;
 }
 
 export const TimeBlockComponent: React.FC<TimeBlockComponentProps> = ({
   block,
   nowHour,
+  targetMilestoneLabel,
+  isAtRisk,
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -23,7 +29,6 @@ export const TimeBlockComponent: React.FC<TimeBlockComponentProps> = ({
   const height = block.durationHours * HOUR_HEIGHT;
   const endHour = block.startHour + block.durationHours;
 
-  // Is this task overdue? (now past end time, and not completed)
   const isOverdue =
     block.type === 'task' && !block.completed && nowHour > endHour;
 
@@ -34,65 +39,92 @@ export const TimeBlockComponent: React.FC<TimeBlockComponentProps> = ({
     ? { transform: `translate3d(0, ${transform.y}px, 0)` }
     : undefined;
 
+  // Compact height handling — if HOUR_HEIGHT is small, single‐line layout
+  const isCompact = height < 28;
+
   return (
     <div
       ref={setNodeRef}
       {...(block.type === 'task' ? { ...listeners, ...attributes } : {})}
       className={`
-        absolute left-[72px] right-4 rounded-lg border px-3 py-2
-        flex flex-col justify-center
-        transition-shadow duration-200
-        ${isDragging ? 'z-50 shadow-2xl opacity-90 scale-[1.02]' : 'z-10'}
+        absolute left-[52px] right-3 border overflow-hidden
+        flex items-center
+        transition-shadow duration-150
+        ${isCompact ? 'rounded px-2 gap-2' : 'rounded-md px-2.5 py-1 gap-1.5 flex-col items-start justify-center'}
+        ${isDragging ? 'z-50 shadow-xl opacity-90 scale-[1.01]' : 'z-10'}
         ${
           isMilestone
-            ? 'bg-milestone border-milestone-border cursor-default'
+            ? isAtRisk
+              ? 'bg-milestone border-l-[3px] animate-milestone-danger cursor-default'
+              : 'bg-milestone border-milestone-border cursor-default'
             : isOverdue
-              ? 'animate-overdue-blink border-danger-bright cursor-grab'
+              ? 'bg-task/80 border-task-border/40 border-l-[3px] border-l-danger-bright animate-overdue-accent cursor-grab'
               : isCompleted
-                ? 'bg-emerald-900/30 border-emerald-700/50 cursor-grab opacity-60'
-                : 'bg-task border-task-border cursor-grab hover:shadow-lg hover:shadow-task-border/20'
+                ? 'bg-emerald-900/20 border-emerald-800/30 cursor-grab opacity-50'
+                : 'bg-task border-task-border cursor-grab hover:shadow-md hover:shadow-task-border/20'
         }
       `}
       style={{
         top: `${top}px`,
-        height: `${height}px`,
-        minHeight: '32px',
+        height: `${Math.max(height, 18)}px`,
         ...dragStyle,
       }}
     >
-      {/* Time range badge */}
-      <span
-        className={`
-          text-[10px] font-mono tracking-wider mb-0.5
-          ${isMilestone ? 'text-milestone-text/60' : isOverdue ? 'text-danger-glow' : isCompleted ? 'text-emerald-400/50' : 'text-task-text/60'}
-        `}
-      >
-        {formatHour(block.startHour)} – {formatHour(endHour)}
-      </span>
+      {isCompact ? (
+        /* ── Single-line compact layout ── */
+        <>
+          <span className={`text-[9px] font-mono shrink-0 ${isMilestone ? 'text-milestone-text/60' : isOverdue ? 'text-danger-glow/80' : isCompleted ? 'text-emerald-500/40' : 'text-task-text/50'}`}>
+            {formatHour(block.startHour)}
+          </span>
+          <span className={`text-[11px] leading-none truncate ${isMilestone ? 'text-milestone-text font-medium' : isOverdue ? 'text-task-text/90' : isCompleted ? 'text-emerald-500/40 line-through' : 'text-task-text'}`}>
+            {block.title}
+          </span>
+          {targetMilestoneLabel && !isCompleted && (
+            <span className={`text-[8px] shrink-0 px-1 py-0 rounded ${isOverdue ? 'text-danger-glow/70 bg-danger/20' : 'text-text-muted bg-surface-overlay/50'}`}>
+              🎯{targetMilestoneLabel}
+            </span>
+          )}
+          {isOverdue && (
+            <span className="text-[8px] text-danger-bright shrink-0">遅延</span>
+          )}
+        </>
+      ) : (
+        /* ── Multi-line layout (taller blocks) ── */
+        <>
+          {/* Top row: time + milestone target */}
+          <div className="flex items-center gap-1.5 w-full min-w-0">
+            <span className={`text-[9px] font-mono shrink-0 ${isMilestone ? 'text-milestone-text/50' : isOverdue ? 'text-danger-glow/70' : isCompleted ? 'text-emerald-500/40' : 'text-task-text/50'}`}>
+              {formatHour(block.startHour)}–{formatHour(endHour)}
+            </span>
+            {targetMilestoneLabel && !isCompleted && (
+              <span className={`text-[8px] px-1 rounded truncate ${isOverdue ? 'text-danger-glow/80 bg-danger/20' : 'text-text-muted bg-surface-overlay/40'}`}>
+                🎯 {targetMilestoneLabel}
+              </span>
+            )}
+            {isOverdue && (
+              <span className="text-[8px] text-danger-bright font-semibold ml-auto shrink-0">⚠ 遅延中</span>
+            )}
+          </div>
 
-      {/* Title */}
-      <span
-        className={`
-          text-sm font-medium leading-tight truncate
-          ${isMilestone ? 'text-milestone-text' : isOverdue ? 'text-danger-glow font-semibold' : isCompleted ? 'text-emerald-400/50 line-through' : 'text-task-text'}
-        `}
-      >
-        {block.title}
-      </span>
+          {/* Title */}
+          <span className={`text-[11px] leading-tight truncate w-full ${isMilestone ? 'text-milestone-text font-medium' : isOverdue ? 'text-task-text' : isCompleted ? 'text-emerald-500/40 line-through' : 'text-task-text'}`}>
+            {block.title}
+          </span>
 
-      {/* Overdue badge */}
-      {isOverdue && (
-        <span className="text-[10px] text-danger-bright font-semibold mt-0.5 tracking-wide">
-          ⚠️ 遅延中
-        </span>
+          {/* Milestone at-risk indicator */}
+          {isMilestone && isAtRisk && (
+            <span className="text-[8px] text-danger-glow font-semibold animate-pulse">
+              ⚠ 準備タスクに遅延あり
+            </span>
+          )}
+        </>
       )}
 
-      {/* Drag handle indicator for tasks */}
-      {block.type === 'task' && !isCompleted && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 opacity-30">
-          <span className="block w-4 h-0.5 bg-current rounded" />
-          <span className="block w-4 h-0.5 bg-current rounded" />
-          <span className="block w-4 h-0.5 bg-current rounded" />
+      {/* Drag handle (tasks only, visible on taller blocks) */}
+      {block.type === 'task' && !isCompleted && !isCompact && (
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-px opacity-20">
+          <span className="block w-3 h-px bg-current rounded" />
+          <span className="block w-3 h-px bg-current rounded" />
         </div>
       )}
     </div>

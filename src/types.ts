@@ -10,6 +10,8 @@ export interface TimeBlock {
   durationHours: number;
   /** Whether the task has been completed */
   completed?: boolean;
+  /** ID of the milestone this task is targeting (tasks only) */
+  targetMilestoneId?: string;
 }
 
 export interface WarpZone {

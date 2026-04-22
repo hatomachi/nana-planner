@@ -1,6 +1,6 @@
 import type { TimeBlock, WarpZone } from './types';
 
-export const HOUR_HEIGHT = 100; // pixels per hour
+export const HOUR_HEIGHT = 40; // pixels per hour — compact for high-density overview
 
 /** Timeline visible range: 9:00 → 19:00 today, then warp, then 9:00 → 19:00 tomorrow */
 export const TIMELINE_START_HOUR = 9;
@@ -9,8 +9,8 @@ export const TIMELINE_END_HOUR = 19; // displays up to 19:00 (7pm)
 export const WARP_ZONE: WarpZone = {
   startHour: 19,
   endHour: 33, // 9:00 next day = 24+9 = 33
-  collapsedHeight: 64,
-  label: '🌙 14時間のインターバル ☀️',
+  collapsedHeight: 40,
+  label: '🌙 14h interval ☀️',
 };
 
 /** Next-day block runs from 33 (9:00) to 43 (19:00) */
@@ -18,6 +18,7 @@ export const NEXT_DAY_START_HOUR = 33;
 export const NEXT_DAY_END_HOUR = 43;
 
 export const initialBlocks: TimeBlock[] = [
+  // ── Milestones ──
   {
     id: 'milestone-1',
     type: 'milestone',
@@ -34,6 +35,8 @@ export const initialBlocks: TimeBlock[] = [
     durationHours: 1,
     completed: false,
   },
+
+  // ── Tasks (with milestone targets) ──
   {
     id: 'task-1',
     type: 'task',
@@ -41,6 +44,7 @@ export const initialBlocks: TimeBlock[] = [
     startHour: 10,
     durationHours: 1.5,
     completed: false,
+    targetMilestoneId: 'milestone-1',
   },
   {
     id: 'task-2',
@@ -49,6 +53,7 @@ export const initialBlocks: TimeBlock[] = [
     startHour: 12,
     durationHours: 1,
     completed: false,
+    targetMilestoneId: 'milestone-1',
   },
   {
     id: 'task-3',
@@ -57,6 +62,7 @@ export const initialBlocks: TimeBlock[] = [
     startHour: 14,
     durationHours: 0.5,
     completed: true,
+    targetMilestoneId: 'milestone-1',
   },
   {
     id: 'task-4',
@@ -65,5 +71,6 @@ export const initialBlocks: TimeBlock[] = [
     startHour: 34, // next day 10:00
     durationHours: 2,
     completed: false,
+    targetMilestoneId: 'milestone-2',
   },
 ];

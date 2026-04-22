@@ -13,14 +13,14 @@ export const NowLine: React.FC<NowLineProps> = ({ nowHour }) => {
       className="absolute left-0 right-0 z-40 pointer-events-none"
       style={{ top: `${top}px` }}
     >
-      {/* Diamond marker on the left */}
-      <div className="absolute -left-1 -top-[6px] w-3 h-3 bg-nowline rounded-sm rotate-45 shadow-lg shadow-red-500/50" />
+      {/* Diamond marker */}
+      <div className="absolute -left-0.5 -top-[4px] w-2 h-2 bg-nowline rounded-sm rotate-45 shadow-md shadow-red-500/40" />
 
-      {/* The line itself */}
+      {/* Line */}
       <div className="h-[2px] bg-nowline animate-pulse-glow rounded-full" />
 
-      {/* "NOW" label */}
-      <div className="absolute -top-[10px] left-4 bg-nowline text-white text-[9px] font-bold px-1.5 py-0.5 rounded tracking-widest shadow-lg">
+      {/* NOW badge */}
+      <div className="absolute -top-[8px] left-3 bg-nowline text-white text-[7px] font-bold px-1 py-px rounded tracking-widest shadow-md">
         NOW
       </div>
     </div>

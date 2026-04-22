@@ -52,7 +52,7 @@
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -61,7 +61,7 @@
 
   ::-webkit-scrollbar-thumb {
     background: var(--color-border);
-    border-radius: 4px;
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -72,22 +72,34 @@
 /* Now line pulse animation */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.3);
   }
   50% {
-    box-shadow: 0 0 16px 4px rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.6);
   }
 }
 
-/* Overdue task blink animation */
-@keyframes overdue-blink {
+/* Overdue left-accent pulse — subtle left border that breathes */
+@keyframes overdue-accent-pulse {
   0%, 100% {
-    background-color: rgba(153, 27, 27, 0.6);
-    border-color: rgba(239, 68, 68, 0.8);
+    border-left-color: rgba(239, 68, 68, 0.7);
+    box-shadow: inset 3px 0 8px -4px rgba(239, 68, 68, 0.3);
   }
   50% {
-    background-color: rgba(153, 27, 27, 0.9);
-    border-color: rgba(248, 113, 113, 1);
+    border-left-color: rgba(248, 113, 113, 1);
+    box-shadow: inset 3px 0 12px -4px rgba(248, 113, 113, 0.5);
+  }
+}
+
+/* Milestone danger pulse (when its tasks are at risk) */
+@keyframes milestone-danger-pulse {
+  0%, 100% {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    border-color: rgba(248, 113, 113, 0.7);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
   }
 }
 
@@ -95,6 +107,10 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.animate-overdue-blink {
-  animation: overdue-blink 1.2s ease-in-out infinite;
+.animate-overdue-accent {
+  animation: overdue-accent-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-milestone-danger {
+  animation: milestone-danger-pulse 1.5s ease-in-out infinite;
 }
