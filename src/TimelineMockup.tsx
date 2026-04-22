@@ -2,11 +2,12 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { TimeBlock } from './types';
 import { initialBlocks, HOUR_HEIGHT, TIMELINE_START_HOUR, TIMELINE_END_HOUR, NEXT_DAY_START_HOUR, NEXT_DAY_END_HOUR } from './data';
-import { hourToPixel, pixelToHour, getTotalTimelineHeight, formatHour } from './timelineUtils';
+import { hourToPixel, pixelToHour, getTotalTimelineHeight, formatHour, getNextMilestone } from './timelineUtils';
 import { TimeBlockComponent } from './TimeBlockComponent';
 import { NowLine } from './NowLine';
 import { WarpZoneComponent } from './WarpZone';
 import { DebugPanel } from './DebugPanel';
+import { CountdownBanner, CountdownHeader } from './CountdownBanner';
 
 /**
  * Generate hour marks for the timeline grid.
@@ -92,6 +93,9 @@ export const TimelineMockup: React.FC = () => {
     (b) => b.type === 'task' && !b.completed && nowHour > b.startHour + b.durationHours
   ).length;
 
+  // Next milestone countdown
+  const nextMilestoneInfo = getNextMilestone(blocks, nowHour);
+
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}
@@ -112,6 +116,10 @@ export const TimelineMockup: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Countdown header */}
+            {nextMilestoneInfo && (
+              <CountdownHeader info={nextMilestoneInfo} />
+            )}
             {overdueCount > 0 && (
               <div className="flex items-center gap-1.5 bg-danger/30 border border-danger-bright/40 rounded-full px-3 py-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-danger-bright animate-pulse" />
@@ -190,6 +198,11 @@ export const TimelineMockup: React.FC = () => {
 
                 {/* Now Line */}
                 <NowLine nowHour={nowHour} />
+
+                {/* Countdown Banner on timeline */}
+                {nextMilestoneInfo && (
+                  <CountdownBanner info={nextMilestoneInfo} />
+                )}
 
                 {/* Time Blocks */}
                 {blocks.map((block) => (

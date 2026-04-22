@@ -6,6 +6,7 @@ import {
   NEXT_DAY_START_HOUR,
   NEXT_DAY_END_HOUR,
 } from './data';
+import type { TimeBlock } from './types';
 
 /**
  * Convert a decimal hour to a pixel Y position on the timeline.
@@ -96,3 +97,101 @@ export function clampHour(hour: number): number {
   if (hour > NEXT_DAY_END_HOUR) return NEXT_DAY_END_HOUR;
   return hour;
 }
+
+/**
+ * Calculate the effective working hours between two time points,
+ * excluding the warp (non-working) zone.
+ *
+ * Example: from 18:00 (hour=18) to next day 10:00 (hour=34)
+ *   → working time = (19-18) + (34-33) = 2 hours
+ *   (warp zone 19→33 is excluded)
+ */
+export function getEffectiveWorkingHours(fromHour: number, toHour: number): number {
+  if (toHour <= fromHour) return 0;
+
+  const warpStart = WARP_ZONE.startHour;
+  const warpEnd = WARP_ZONE.endHour;
+
+  // Both before warp
+  if (toHour <= warpStart) {
+    return toHour - fromHour;
+  }
+
+  // Both after warp
+  if (fromHour >= warpEnd) {
+    return toHour - fromHour;
+  }
+
+  // fromHour is before warp, toHour is inside warp
+  if (fromHour < warpStart && toHour <= warpEnd) {
+    return warpStart - fromHour;
+  }
+
+  // fromHour is before warp, toHour is after warp
+  if (fromHour < warpStart && toHour > warpEnd) {
+    return (warpStart - fromHour) + (toHour - warpEnd);
+  }
+
+  // fromHour is inside warp
+  if (fromHour >= warpStart && fromHour < warpEnd) {
+    if (toHour <= warpEnd) return 0;
+    return toHour - warpEnd;
+  }
+
+  return toHour - fromHour;
+}
+
+/**
+ * Format a duration in hours to a human-readable countdown string.
+ * e.g. 2.5 → "2時間30分", 0.25 → "15分"
+ */
+export function formatDuration(hours: number): string {
+  if (hours <= 0) return '0分';
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (h === 0) return `${m}分`;
+  if (m === 0) return `${h}時間`;
+  return `${h}時間${m}分`;
+}
+
+export interface NextMilestoneInfo {
+  milestone: TimeBlock;
+  /** Effective working hours until the milestone start */
+  effectiveHoursRemaining: number;
+  /** Raw hours until the milestone (including non-working time) */
+  rawHoursRemaining: number;
+  /** Urgency level: 'critical' (<1h), 'warning' (<2h), 'normal' */
+  urgency: 'critical' | 'warning' | 'normal';
+}
+
+/**
+ * Find the next milestone after the given nowHour
+ * and compute the effective remaining working time.
+ */
+export function getNextMilestone(
+  blocks: TimeBlock[],
+  nowHour: number
+): NextMilestoneInfo | null {
+  // Get all milestones that haven't started yet
+  const upcoming = blocks
+    .filter((b) => b.type === 'milestone' && b.startHour > nowHour)
+    .sort((a, b) => a.startHour - b.startHour);
+
+  if (upcoming.length === 0) return null;
+
+  const milestone = upcoming[0];
+  const rawHoursRemaining = milestone.startHour - nowHour;
+  const effectiveHoursRemaining = getEffectiveWorkingHours(nowHour, milestone.startHour);
+
+  let urgency: NextMilestoneInfo['urgency'] = 'normal';
+  if (effectiveHoursRemaining < 1) urgency = 'critical';
+  else if (effectiveHoursRemaining < 2) urgency = 'warning';
+
+  return {
+    milestone,
+    effectiveHoursRemaining,
+    rawHoursRemaining,
+    urgency,
+  };
+}
+
