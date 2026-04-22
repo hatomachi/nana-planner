@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme {
+  /* Timeline Design Tokens */
+  --color-surface: #0f0f14;
+  --color-surface-raised: #1a1a24;
+  --color-surface-overlay: #24243a;
+  --color-border: #2e2e48;
+  --color-border-subtle: #1e1e34;
+
+  --color-text-primary: #e8e8f0;
+  --color-text-secondary: #8888a8;
+  --color-text-muted: #55557a;
+
+  --color-accent: #6366f1;
+  --color-accent-glow: #818cf8;
+  --color-accent-subtle: #4338ca;
+
+  --color-milestone: #374151;
+  --color-milestone-border: #4b5563;
+  --color-milestone-text: #d1d5db;
+
+  --color-task: #064e3b;
+  --color-task-border: #059669;
+  --color-task-text: #a7f3d0;
+
+  --color-danger: #991b1b;
+  --color-danger-bright: #ef4444;
+  --color-danger-glow: #f87171;
+
+  --color-nowline: #ef4444;
+
+  --color-warp-bg: #1a1028;
+  --color-warp-border: #2e1f52;
+  --color-warp-text: #a78bfa;
+
+  --font-sans: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-surface);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+  }
+}
+
+/* Now line pulse animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(239, 68, 68, 0.7);
+  }
+}
+
+/* Overdue task blink animation */
+@keyframes overdue-blink {
+  0%, 100% {
+    background-color: rgba(153, 27, 27, 0.6);
+    border-color: rgba(239, 68, 68, 0.8);
+  }
+  50% {
+    background-color: rgba(153, 27, 27, 0.9);
+    border-color: rgba(248, 113, 113, 1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-overdue-blink {
+  animation: overdue-blink 1.2s ease-in-out infinite;
+}
